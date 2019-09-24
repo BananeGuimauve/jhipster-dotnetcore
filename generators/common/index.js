@@ -45,6 +45,7 @@ module.exports = class extends CommonGenerator {
             configureGlobal() {
                 this.kebabCasedBaseName = _.kebabCase(this.baseName);
                 this.pascalizedBaseName = toPascalCase(this.baseName);
+                this.lowercaseBaseName = this.baseName.toLowerCase();
                 this.mainProjectDir = this.pascalizedBaseName;
                 this.mainClientDir = `${this.mainProjectDir}/ClientApp`;
             }

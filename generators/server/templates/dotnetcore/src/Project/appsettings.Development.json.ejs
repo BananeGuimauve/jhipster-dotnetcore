@@ -26,6 +26,17 @@
         ]
     },
     "EntityFramework": {
+        <%_ if (databaseType === 'sql') {
+            if (devDatabaseType === 'sqliteDisk') { _%>
+        "DataSource": "<%= lowercaseBaseName %>.db"
+            <%_ } else if (devDatabaseType === 'sqliteMemory') { _%>
         "DataSource": ":memory:"
+            <%_ } else if ((devDatabaseType === 'postgresql' && prodDatabaseType === 'postgresql')) { _%>
+        "Host": "",
+        "Database": "",
+        "Username": "",
+        "Password": ""
+            <%_ }
+        } _%>
     }
 }

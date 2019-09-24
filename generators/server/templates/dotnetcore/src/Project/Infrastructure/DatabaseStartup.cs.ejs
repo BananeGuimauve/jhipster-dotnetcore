@@ -23,25 +23,63 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace <%= namespace %>.Infrastructure {
     public static class DatabaseConfiguration {
-        public static IServiceCollection AddDatabaseModule(this IServiceCollection @this, IConfiguration configuration)
+        public static IServiceCollection AddDatabaseModule(this IServiceCollection @this, IConfiguration configuration,
+            IHostingEnvironment environment)
         {
             var entityFrameworkConfiguration = configuration.GetSection("EntityFramework");
-            var connection = new SqliteConnection(new SqliteConnectionStringBuilder {
-                DataSource = entityFrameworkConfiguration["DataSource"]
-            }.ToString());
+            <%_ if (databaseType === 'sql') {
+                if (devDatabaseType === prodDatabaseType) { _%>
+            if (environment.IsDevelopment() || environment.IsProduction()) {
+                    <%_ if (devDatabaseType === 'postgresql' && prodDatabaseType === 'postgresql') { _%>
+                var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder {
+                        Host = entityFrameworkConfiguration["Host"],
+                        Database = entityFrameworkConfiguration["Database"],
+                        Username = entityFrameworkConfiguration["Username"],
+                        Password = entityFrameworkConfiguration["Password"],
+                    }.ConnectionString
+                );
 
-            @this.AddDbContext<ApplicationDatabaseContext>(context => { context.UseSqlite(connection); });
+                @this.AddDbContext<ApplicationDatabaseContext>(context => { context.UseNpgsql(connection); });
+                    <%_ } _%>
+            }
+                <%_ } else { _%>
+            if (environment.IsDevelopment()) {
+                    <%_ if (devDatabaseType === 'sqliteDisk' || devDatabaseType === 'sqliteMemory') { _%>
+                var connection = new SqliteConnection(new SqliteConnectionStringBuilder {
+                        DataSource = entityFrameworkConfiguration["DataSource"]
+                    }.ConnectionString
+                );
+
+                @this.AddDbContext<ApplicationDatabaseContext>(context => { context.UseSqlite(connection); });
+                    <%_ } _%>
+            } else if (environment.IsProduction()) {
+                    <%_ if (prodDatabaseType === 'postgresql') { _%>
+                var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder {
+                        Host = entityFrameworkConfiguration["Host"],
+                        Database = entityFrameworkConfiguration["Database"],
+                        Username = entityFrameworkConfiguration["Username"],
+                        Password = entityFrameworkConfiguration["Password"],
+                    }.ConnectionString
+                );
+
+                @this.AddDbContext<ApplicationDatabaseContext>(context => { context.UseNpgsql(connection); });
+                    <%_ } _%>
+            }
+                <%_ }
+            } _%>
 
             return @this;
         }
 
         public static IApplicationBuilder UseApplicationDatabase(this IApplicationBuilder @this,
-            IServiceProvider serviceProvider, IHostingEnvironment environment)
+            IServiceProvider serviceProvider)
         {
-            if (environment.IsDevelopment() || environment.IsProduction()) {
-                var context = serviceProvider.GetRequiredService<ApplicationDatabaseContext>();
-                context.Database.OpenConnection();
-                context.Database.EnsureCreated();
+            var context = serviceProvider.GetRequiredService<ApplicationDatabaseContext>();
+            context.Database.OpenConnection();
+            var dbCreated = context.Database.EnsureCreated();
+            // When creating the database, insert users and roles
+            if (dbCreated) {
+                @this.UseApplicationIdentity(serviceProvider);
             }
 
             return @this;

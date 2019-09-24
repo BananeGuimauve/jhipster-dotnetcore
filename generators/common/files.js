@@ -27,7 +27,7 @@ const files = {
             templates: [{ file: 'Project/Dockerfile', renameTo: generator => `${generator.mainProjectDir}/Dockerfile` }]
         },
         {
-            templates: [{ file: 'dockerignore', renameTo: () => '.dockerignore', method: 'copy' }]
+            templates: [{ file: 'dockerignore', renameTo: () => '.dockerignore' }]
         }
     ],
     general: [

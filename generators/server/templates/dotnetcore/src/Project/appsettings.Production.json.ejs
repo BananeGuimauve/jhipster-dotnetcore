@@ -36,6 +36,13 @@
         ]
     },
     "EntityFramework": {
-        "DataSource": ":memory:"
+        <%_ if (databaseType === 'sql') {
+            if (prodDatabaseType === 'postgresql') { _%>
+        "Host": "",
+        "Database": "",
+        "Username": "",
+        "Password": ""
+            <%_ }
+        } _%>
     }
 }
